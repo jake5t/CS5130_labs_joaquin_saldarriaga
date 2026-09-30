@@ -1,56 +1,39 @@
 ## By - Joaquin Saldarriaga (NUID: 002597882)
 ## Challenge on Codes Northeastern University
-## Lab  1 -> Week 1 - Gradio Application
+## Lab 1 -> Week 1 - Streamlit Application (converted from Gradio)
 
-"""Main code file that runs the Gradio interface for interactive image mosaic reconstruction.
-
-Interface:
-    * Accept an uploaded image
-    * Select a grid size
-    * Select a predefined tile family
-    * Display preprocessing, segmentation, and reconstruction outputs
-
-"""
-
-## ********** Import Required Libraries **********
-from __future__ import annotations
-
-import gradio as gr
-
+import streamlit as st
 from mosaic_pipeline import create_mosaic
+from PIL import Image
+import numpy as np
 
+st.title("Interactive Image Mosaic Generator")
+st.write("Upload an image, choose a grid size, and reconstruct it with predefined image tiles.")
 
-## Function 1 -> Build the interactive Gradio interface
-def build_interface() -> gr.Interface:
-    """Build the assignment interface with image, grid, and tile controls.
+# ---- INPUT IMAGE ----
+uploaded = st.file_uploader("Upload an image", type=["jpg", "jpeg", "png"])
 
-    Returns:
-        * gr.Interface -> Configured interface connected to the mosaic pipeline
-    """
-    ## Define the user inputs required by the mosaic pipeline.
-    inputs = [
-        gr.Image(type="numpy", label = "Input image"),
-        gr.Dropdown([16, 32, 64], value=32, label = "Grid size"),
-        gr.Dropdown(["Solid", "Diagonal", "Checkerboard"], value="Diagonal", label = "Tile set"),
-    ]
+# ---- GRID SIZE ----
+grid_size = st.selectbox("Grid size", [16, 32, 64], index=1)
 
-    ## Define the preprocessed, segmented, and mosaic outputs.
-    outputs = [
-        gr.Image(label = "Preprocessed image"),
-        gr.Image(label = "Segmented image"),
-        gr.Image(label = "Mosaic reconstruction"),
-    ]
+# ---- TILE SET ----
+tile_set = st.selectbox("Tile set", ["Solid", "Diagonal", "Checkerboard"], index=1)
 
-    ## Create the interactive Gradio application with the pipeline callback.
-    return gr.Interface(
-        fn = create_mosaic,
-        inputs = inputs,
-        outputs = outputs,
-        title = "Interactive Image Mosaic Generator",
-        description = "Upload an image, choose a grid, and reconstruct it with predefined image tiles.",
-    )
+# ---- RUN PIPELINE ----
+if uploaded:
+    # Convert uploaded file to numpy array
+    img = Image.open(uploaded).convert("RGB")
+    img_np = np.array(img)
 
+    # Run your existing pipeline
+    preprocessed, segmented, mosaic = create_mosaic(img_np, grid_size, tile_set)
 
-## ********** Launch Gradio Application **********
-if __name__ == "__main__":
-    build_interface().launch()
+    # Display results
+    st.subheader("Preprocessed image")
+    st.image(preprocessed)
+
+    st.subheader("Segmented image")
+    st.image(segmented)
+
+    st.subheader("Mosaic reconstruction")
+    st.image(mosaic)
